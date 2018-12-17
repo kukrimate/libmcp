@@ -61,8 +61,8 @@ static void print_spi_settings(mcp2210_spi_settings_t s)
 		"\t.data_to_cs_delay = 0x%04x\n\t.data_delay = 0x%04x\n"
 		"\t.bytes_per_transaction = 0x%04x\n"
 		"\t.spi_mode = %d\n}\n",
-		 s.bitrate, s.idle_cs, s.active_cs, s.cs_to_data_delay,
-		 s.data_to_cs_delay, s.data_delay, s.bytes_per_transaction,
+		 b32(s.bitrate), b16(s.idle_cs), b16(s.active_cs), b16(s.cs_to_data_delay),
+		 b16(s.data_to_cs_delay), b16(s.data_delay), b16(s.bytes_per_transaction),
 		 s.spi_mode);
 }
 
@@ -85,7 +85,7 @@ static void print_chip_settings(mcp2210_chip_settings_t s)
 	}
 	printf("\t},\n\t.gpio_default = 0x%04x,\n\t.gpio_direction = 0x%04x,\n"
 		"\t.other_settings = 0x%02x,\n\t.nvram_lock = 0x%02x\n}\n",
-		s.gpio_default, s.gpio_direction, s.other_settings,
+		b16(s.gpio_default), b16(s.gpio_direction), s.other_settings,
 		s.nvram_lock);
 }
 
@@ -93,7 +93,7 @@ static void print_key_parameters(mcp2210_key_parameters_t s)
 {
 	printf("{\n\t.vid = 0x%04x\n\t.pid = 0x%04x\n"
 		"\t.power_options = 0x%02x\n\t.current_amount = %d mA\n}\n",
-		 s.vid, s.pid, s.power_options, s.current_amount * 2);	
+		 b16(s.vid), b16(s.pid), s.power_options, s.current_amount * 2);
 }
 
 static int command_get_set(int argc, char **argv)

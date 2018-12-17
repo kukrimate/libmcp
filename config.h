@@ -5,13 +5,13 @@
 // SPI settings
 mcp2210_spi_settings_t config_spi_settings =
 {
-	.bitrate               = 1464, /* this is the minimum bitrate */
-	.idle_cs               = 0x1ff,
-	.active_cs             = 0,
-	.cs_to_data_delay      = 100,
-	.data_to_cs_delay      = 100,
-	.data_delay            = 100,
-	.bytes_per_transaction = 64,
+	.bitrate               = b32(1464), /* this is the minimum bitrate */
+	.idle_cs               = b16(0x1ff),
+	.active_cs             = b16(0),
+	.cs_to_data_delay      = b16(100),
+	.data_to_cs_delay      = b16(100),
+	.data_delay            = b16(100),
+	.bytes_per_transaction = b16(64),
 	.spi_mode              = 0
 };
 
@@ -27,8 +27,8 @@ mcp2210_chip_settings_t config_chip_settings =
 			MCP2210_PIN_GPIO,
 			MCP2210_PIN_GPIO,
 			MCP2210_PIN_GPIO },
-	.gpio_default   = 0,
-	.gpio_direction = 0,
+	.gpio_default   = b16(0),
+	.gpio_direction = b16(0),
 	.other_settings = 0,
 	.nvram_lock     = 0,
 	.new_password   = { 0, 0, 0, 0, 0, 0, 0, 0 }
@@ -37,8 +37,8 @@ mcp2210_chip_settings_t config_chip_settings =
 // Key parameters
 mcp2210_key_parameters_t config_key_parameters =
 {
-	.vid            = MCP2210_VID,
-	.pid            = MCP2210_PID,
+	.vid            = b16(MCP2210_VID),
+	.pid            = b16(MCP2210_PID),
 	//.power_options = SELF_POWERED,
 	.power_options  = HOST_POWERED,
 	// Required current in 2 mA

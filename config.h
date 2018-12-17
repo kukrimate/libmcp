@@ -5,13 +5,13 @@
 // SPI settings
 mcp2210_spi_settings_t config_spi_settings =
 {
-	.bitrate               = MCP2210_MAX_BITRATE,
-	.idle_cs               = 0xffff,
+	.bitrate               = 1464, /* this is the minimum bitrate */
+	.idle_cs               = 0x1ff,
 	.active_cs             = 0,
-	.cs_to_data_delay      = 0,
-	.data_to_cs_delay      = 0,
-	.data_delay            = 0,
-	.bytes_per_transaction = 2,
+	.cs_to_data_delay      = 100,
+	.data_to_cs_delay      = 100,
+	.data_delay            = 100,
+	.bytes_per_transaction = 64,
 	.spi_mode              = 0
 };
 

@@ -84,9 +84,16 @@ static void print_chip_settings(mcp2210_chip_settings_t s)
 		}
 	}
 	printf("\t},\n\t.gpio_default = 0x%04x,\n\t.gpio_direction = 0x%04x,\n"
-		"\t.other_settings = 0x%02x,\n\t.nvram_chip_access_control = 0x%02x\n}\n",
+		"\t.other_settings = 0x%02x,\n\t.nvram_lock = 0x%02x\n}\n",
 		s.gpio_default, s.gpio_direction, s.other_settings,
-		s.nvram_chip_access_control);
+		s.nvram_lock);
+}
+
+static void print_key_parameters(mcp2210_key_parameters_t s)
+{
+	printf("{\n\t.vid = 0x%04x\n\t.pid = 0x%04x\n"
+		"\t.power_options = 0x%02x\n\t.current_amount = %d mA\n}\n",
+		 s.vid, s.pid, s.power_options, s.current_amount * 2);	
 }
 
 static int command_get_set(int argc, char **argv)
@@ -116,7 +123,8 @@ static int command_get_set(int argc, char **argv)
 
 	if (optind >= argc - 1) {
 		fprintf(stderr, "Usage: %s <chip_number>"
-			" <spi_settings|chip_settings|key_parameters>\n",
+			" <product_name|manufacturer_name|spi_settings|"
+			"chip_settings|key_parameters>\n",
 			argv[0]);
 		return 1;
 	}
@@ -177,6 +185,73 @@ static int command_get_set(int argc, char **argv)
 			goto done;
 		}
 		print_chip_settings(chip_settings);
+	} else if (!strcmp(argv[optind + 1], "product_name")) {
+		if (!is_nvram && !get)
+			printf("NOTE: The product name is always set in NVRAM.\n");
+
+		if (!get) {
+			printf("Writing product name...\n");
+			if (-1 == write_product_name(devices[index - 1], CONFIG_PRODUCT_NAME)) {
+				perror("Failed to write product name");
+				status = 1;
+				goto done;
+			}
+		}
+
+		printf("Reading product name...\n");
+		char *buffer = malloc(100);
+		if (-1 == read_product_name(devices[index - 1], buffer, 100)) {
+			free(buffer);
+			perror("Failed to read product name");
+			status = 1;
+			goto done;
+		}
+		printf("Product name: %s\n", buffer);
+		free(buffer);
+	} else if (!strcmp(argv[optind + 1], "manufacturer_name")) {
+		if (!is_nvram && !get)
+			printf("NOTE: The manufacturer name is always set in NVRAM.\n");
+
+		if (!get) {
+			printf("Writing manufacturer name...\n");
+			if (-1 == write_manufacturer_name(devices[index - 1], CONFIG_MANUFACTURER_NAME)) {
+				perror("Failed to write manufacturer name");
+				status = 1;
+				goto done;
+			}
+		}
+
+		printf("Reading manufacturer name...\n");
+		char *buffer = malloc(100);
+		if (-1 == read_manufacturer_name(devices[index - 1], buffer, 100)) {
+			free(buffer);
+			perror("Failed to read manufacturer name");
+			status = 1;
+			goto done;
+		}
+		printf("Manufacturer name: %s\n", buffer);
+		free(buffer);
+	} else if (!strcmp(argv[optind + 1], "key_parameters")) {
+		if (!is_nvram && !get)
+			printf("NOTE: The key parameters are always set in NVRAM.\n");
+
+		if (!get) {
+			printf("Writing key parameters...\n");
+			if (-1 == write_key_parameters(devices[index - 1], &config_key_parameters)) {
+				perror("Failed to write key parameters");
+				status = 1;
+				goto done;
+			}
+		}
+
+		printf("Reading key parameters...\n");
+		mcp2210_key_parameters_t key_parameters;
+		if (-1 == read_key_parameters(devices[index - 1], &key_parameters)) {
+			perror("Failed to read key parameters");
+			status = 1;
+			goto done;
+		}
+		print_key_parameters(key_parameters);
 	} else {
 		fprintf(stderr, "Unknown setting type %s\n", argv[optind + 1]);
 		status = 1;

@@ -30,8 +30,26 @@ mcp2210_chip_settings_t config_chip_settings =
 	.gpio_default   = 0,
 	.gpio_direction = 0,
 	.other_settings = 0,
-	.nvram_chip_access_control = 0,
-	.new_password = { 0, 0, 0, 0, 0, 0, 0, 0 }
+	.nvram_lock     = 0,
+	.new_password   = { 0, 0, 0, 0, 0, 0, 0, 0 }
 };
+
+// Key parameters
+mcp2210_key_parameters_t config_key_parameters =
+{
+	.vid            = MCP2210_VID,
+	.pid            = MCP2210_PID,
+	//.power_options = SELF_POWERED,
+	.power_options  = HOST_POWERED,
+	// Required current in 2 mA
+	.current_amount = 250 // default is 100 mA
+};
+
+// Product name
+//#define CONFIG_PRODUCT_NAME "MCP2210 USB to SPI Master"
+#define CONFIG_PRODUCT_NAME "USB SPI Flasher"
+// Manufacturer name
+//#define CONFIG_MANUFACTURER_NAME "Microchip Technology Inc."
+#define CONFIG_MANUFACTURER_NAME "Mate Kukri"
 
 #endif

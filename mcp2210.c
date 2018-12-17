@@ -11,9 +11,13 @@
 // NVRAM
 #define MCP2210_CMD_SET_NVRAM      0x60
 #define MCP2210_CMD_GET_NVRAM      0x61
-#define MCP2210_SUB_SPI_SETTINGS   0x10
-#define MCP2210_SUB_CHIP_SETTINGS  0x20
-#define MCP2210_SUB_KEY_PARAMETERS 0x30
+
+// NVRAM sub commands
+#define MCP2210_SUB_SPI_SETTINGS      0x10
+#define MCP2210_SUB_CHIP_SETTINGS     0x20
+#define MCP2210_SUB_KEY_PARAMETERS    0x30
+#define MCP2210_SUB_PRODUCT_NAME      0x40
+#define MCP2210_SUB_MANUFACTURER_NAME 0x50
 
 // Volatile RAM
 #define MCP2210_CMD_GET_SPI_SETTINGS 0x41
@@ -25,10 +29,24 @@
 // Transfer SPI data
 #define MCP2210_CMD_TRANSFER_SPI_DATA 0x42
 
+// NOTE: different format in responses then in requests
+// This is NOT exposed to the library user so, this
+// struct is internal use only
+typedef struct mcp2210_key_parameters_resp {
+    uint8_t reserved[8];
+    uint16_t vid;
+    uint16_t pid;
+    uint8_t reserved2[13];
+    uint8_t power_options;
+    // Requested USB current in 2 mA
+    uint8_t current_amount;
+} __attribute__((packed)) mcp2210_key_parameters_resp_t;
+
 typedef union mcp2210_data {
 	mcp2210_spi_settings_t spi_settings;
 	mcp2210_chip_settings_t chip_settings;
 	mcp2210_key_parameters_t key_parameters;
+	mcp2210_key_parameters_resp_t key_parameters_resp;
 	uint8_t raw[60];
 } __attribute__((packed)) mcp2210_data_t;
 
@@ -140,6 +158,157 @@ int write_chip_settings(hid_handle_t *handle, mcp2210_chip_settings_t *chip_sett
 
 	if (resp.hdr[0] != cmd.hdr[0] || resp.hdr[1] != 0 || 
 			nv && resp.hdr[2] != MCP2210_SUB_CHIP_SETTINGS) {
+		errno = EACCES;
+		return -1;
+	}
+
+	return 0;
+}
+
+// Read key parameters
+int read_key_parameters(hid_handle_t *handle, mcp2210_key_parameters_t *key_parameters)
+{
+	mcp2210_cmd_t cmd;
+	prepare_cmd(&cmd, MCP2210_CMD_GET_NVRAM, MCP2210_SUB_KEY_PARAMETERS);
+
+	mcp2210_resp_t resp;
+	if (-1 == do_usb_cmd(handle, &cmd, &resp))
+		return -1;
+
+	if (resp.hdr[0] != cmd.hdr[0] || resp.hdr[1] != 0 || 
+			resp.hdr[2] != cmd.hdr[1]) {
+		errno = EACCES;
+		return -1;
+	}
+
+	key_parameters->vid = resp.data.key_parameters_resp.vid;
+	key_parameters->pid = resp.data.key_parameters_resp.pid;
+	key_parameters->power_options = resp.data.key_parameters_resp.power_options;
+	key_parameters->current_amount = resp.data.key_parameters_resp.current_amount;
+
+	return 0;	
+}
+// Write key parameters
+int write_key_parameters(hid_handle_t *handle, mcp2210_key_parameters_t *key_parameters)
+{
+	mcp2210_cmd_t cmd;
+	prepare_cmd(&cmd, MCP2210_CMD_SET_NVRAM, MCP2210_SUB_KEY_PARAMETERS);
+	cmd.data.key_parameters = *key_parameters;
+
+	mcp2210_resp_t resp;
+	if (-1 == do_usb_cmd(handle, &cmd, &resp))
+		return -1;
+
+	if (resp.hdr[0] != cmd.hdr[0] || resp.hdr[1] != 0 || 
+			resp.hdr[2] != cmd.hdr[1]) {
+		errno = EACCES;
+		return -1;
+	}
+
+	return 0;	
+}
+static void to_ascii(uint16_t *s, size_t l, char *d)
+{
+	size_t i;
+	for (i = 0; i < l; ++i) {
+		d[i] = (char) b16(s[i]);
+	}
+	d[i] = '\0';
+}
+
+static void to_wide(char *s, uint16_t *d)
+{
+	for (size_t i = 0; i < strlen(s); ++i) {
+		d[i] = b16((uint16_t) s[i]);
+	}
+}
+
+// Read product name
+int read_product_name(hid_handle_t *handle, char *buffer, size_t buffer_len)
+{
+	mcp2210_cmd_t cmd;
+	prepare_cmd(&cmd, MCP2210_CMD_GET_NVRAM, MCP2210_SUB_PRODUCT_NAME);
+
+	mcp2210_resp_t resp;
+	if (-1 == do_usb_cmd(handle, &cmd, &resp))
+		return -1;
+
+	if (resp.hdr[0] != cmd.hdr[0] || resp.hdr[1] != 0 || 
+			resp.hdr[2] != cmd.hdr[1]) {
+		errno = EACCES;
+		return -1;
+	}
+
+	size_t char_count = (resp.data.raw[0] - 2) / 2;
+	if (char_count > buffer_len - 1) {
+		errno = ENOMEM;
+		return -1;
+	}
+
+	to_ascii((uint16_t *) (resp.data.raw + 2), char_count, buffer);
+	return 0;
+}
+// Write product name
+int write_product_name(hid_handle_t *handle, char *str)
+{
+	mcp2210_cmd_t cmd;
+	prepare_cmd(&cmd, MCP2210_CMD_SET_NVRAM, MCP2210_SUB_PRODUCT_NAME);
+	cmd.data.raw[0] = strlen(str) * 2 + 2;
+	cmd.data.raw[1] = 3;
+	to_wide(str, (uint16_t *) (cmd.data.raw + 2));
+
+	mcp2210_resp_t resp;
+	if (-1 == do_usb_cmd(handle, &cmd, &resp))
+		return -1;
+
+	if (resp.hdr[0] != cmd.hdr[0] || resp.hdr[1] != 0 || 
+			resp.hdr[2] != cmd.hdr[1]) {
+		errno = EACCES;
+		return -1;
+	}
+
+	return 0;
+}
+
+// Read manufacturer name
+int read_manufacturer_name(hid_handle_t *handle, char *buffer, size_t buffer_len)
+{
+	mcp2210_cmd_t cmd;
+	prepare_cmd(&cmd, MCP2210_CMD_GET_NVRAM, MCP2210_SUB_MANUFACTURER_NAME);
+
+	mcp2210_resp_t resp;
+	if (-1 == do_usb_cmd(handle, &cmd, &resp))
+		return -1;
+
+	if (resp.hdr[0] != cmd.hdr[0] || resp.hdr[1] != 0 || resp.hdr[2] != cmd.hdr[1]) {
+		errno = EACCES;
+		return -1;
+	}
+
+	size_t char_count = (resp.data.raw[0] - 2) / 2;
+	if (char_count > buffer_len - 1) {
+		errno = ENOMEM;
+		return -1;
+	}
+
+	to_ascii((uint16_t *) (resp.data.raw + 2), char_count, buffer);
+	return 0;
+}
+// Write manufacturer name
+int write_manufacturer_name(hid_handle_t *handle, char *str)
+{
+	mcp2210_cmd_t cmd;
+	prepare_cmd(&cmd, MCP2210_CMD_SET_NVRAM, MCP2210_SUB_MANUFACTURER_NAME);
+	cmd.data.raw[0] = strlen(str) * 2 + 2;
+	cmd.data.raw[1] = 3;
+	to_wide(str, (uint16_t *) (cmd.data.raw + 2));
+
+	mcp2210_resp_t resp;
+	if (-1 == do_usb_cmd(handle, &cmd, &resp))
+		return -1;
+
+	if (resp.hdr[0] != cmd.hdr[0] || resp.hdr[1] != 0 || 
+			resp.hdr[2] != cmd.hdr[1]) {
 		errno = EACCES;
 		return -1;
 	}

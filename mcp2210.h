@@ -46,7 +46,7 @@ typedef struct mcp2210_chip_settings {
     uint16_t gpio_default;
     uint16_t gpio_direction;
     uint8_t  other_settings;
-    uint8_t  nvram_chip_access_control;
+    uint8_t  nvram_lock;
     uint8_t  new_password[8];
 } __attribute__((packed)) mcp2210_chip_settings_t;
 
@@ -58,6 +58,7 @@ typedef struct mcp2210_key_parameters {
     uint16_t vid;
     uint16_t pid;
     uint8_t power_options;
+    // Requested USB current in 2 mA
     uint8_t current_amount;
 } __attribute__((packed)) mcp2210_key_parameters_t;
 
@@ -70,6 +71,21 @@ int write_spi_settings(hid_handle_t *handle, mcp2210_spi_settings_t *spi_setting
 int read_chip_settings(hid_handle_t *handle, mcp2210_chip_settings_t *chip_settings, bool nv);
 // Write chip settings
 int write_chip_settings(hid_handle_t *handle, mcp2210_chip_settings_t *chip_settings, bool nv);
+
+// Read key parameters
+int read_key_parameters(hid_handle_t *handle, mcp2210_key_parameters_t *key_parameters);
+// Write key parameters
+int write_key_parameters(hid_handle_t *handle, mcp2210_key_parameters_t *key_parameters);
+
+// Read product name
+int read_product_name(hid_handle_t *handle, char *buffer, size_t buffer_len);
+// Write product name
+int write_product_name(hid_handle_t *handle, char *str);
+
+// Read manufacturer name
+int read_manufacturer_name(hid_handle_t *handle, char *buffer, size_t buffer_len);
+// Write manufacturer name
+int write_manufacturer_name(hid_handle_t *handle, char *str);
 
 // SPI transfer
 int mcp2210_spi_transfer(hid_handle_t *handle, void *ibuf, size_t ilen,	void *obuf, size_t *olen);

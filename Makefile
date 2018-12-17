@@ -20,11 +20,11 @@ libmcp2210.so: $(OBJ) $(HDR)
 	$(CC) $(LDFLAGS) -shared $(OBJ) -o $@ $(LIBS)
 
 # Static library
-libmcp2210.a: $(OBJ)
+libmcp2210.a: $(OBJ) $(HDR)
 	$(AR) $(ARFLAGS) $@ $(OBJ)
 
 # Configuration tool
-mcp2210_conf: $(APPOBJ) $(APPHDR)
+mcp2210_conf: $(APPOBJ) $(APPHDR) libmcp2210.a
 	$(CC) $(LDFLAGS) $(APPOBJ) libmcp2210.a -o $@ $(LIBS)
 
 # Compile C code

@@ -1,0 +1,5 @@
+# Binaries
+*.o
+*.a
+*.so
+mcp2210_conf

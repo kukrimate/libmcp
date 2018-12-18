@@ -316,77 +316,36 @@ int write_manufacturer_name(hid_handle_t *handle, char *str)
 	return 0;
 }
 
-// Write data to SPI
-static int mcp2210_spi_write(hid_handle_t *handle, 
-	void *data,
-	size_t data_len,
-	mcp2210_resp_t *resp)
+// Do an SPI transfer
+int mcp2210_spi_transfer(hid_handle_t *handle,
+    void *send, size_t send_len,
+    void *recv, size_t *recv_len)
 {
-	assert(data_len <= 60);
-
 	mcp2210_cmd_t cmd;
-    prepare_cmd(&cmd, MCP2210_CMD_TRANSFER_SPI_DATA, data_len);
-	if (data_len)
-		memcpy(cmd.data.raw, data, data_len);
-	
-	if (-1 == do_usb_cmd(handle, &cmd, resp))
+	prepare_cmd(&cmd, MCP2210_CMD_TRANSFER_SPI_DATA, send_len);
+	memcpy(cmd.data.raw, send, send_len);
+
+
+	mcp2210_resp_t resp;
+	if (-1 == do_usb_cmd(handle, &cmd, &resp))
 		return -1;
 
-	printf("%01x:%01x:%01x:%01x\n", 
-		resp->hdr[0], resp->hdr[1], resp->hdr[2], resp->hdr[3]);
-
-	if (resp->hdr[0] != cmd.hdr[0] || resp->hdr[1] != 0) {
+	if (resp.hdr[0] != cmd.hdr[0] || resp.hdr[1] != 0) {
 		errno = EBUSY;
 		return -1;
 	}
 
-	return 0;
-}
-
-int mcp2210_spi_transfer(hid_handle_t *handle, 
-	void *ibuf, size_t ilen, 
-	void *obuf, size_t *olen)
-{
-	mcp2210_resp_t resp;
-
-	assert(ilen <= 60);
-
-	if (-1 == mcp2210_spi_write(handle, ibuf, ilen, &resp))
-		return -1;
-
-	if (resp.hdr[3] != 0x20) {
-		// this must be the case after the first write
-		errno = EINVAL;
+	// Check buffer size
+	if (resp.hdr[2] > *recv_len) {
+		errno = ENOMEM;
 		return -1;
 	}
 
-	size_t clen = 0;
-	for (;;) {
-		if (clen > *olen) {
-			errno = ENOMEM;
-			return -1;
-		}
+	// Copy data and data size
+	*recv_len = resp.hdr[2];
+	if (*recv_len)
+		memcpy(recv, resp.data.raw, *recv_len);
 
-		if (-1 == mcp2210_spi_write(handle, NULL, 0, &resp))
-			return -1;
-
-		if (resp.hdr[3] == 0x20) {
-			errno = EINVAL;
-			return -1;
-		}
-
-		clen += resp.hdr[2];
-		memcpy(obuf + clen, resp.data.raw, resp.hdr[2]);
-
-		switch (resp.hdr[3]) {
-		case 0x10:
-			goto done;
-		case 0x30:
-			continue;
-		}
-	}
-
-done:
-	*olen = clen;
-	return 0;
+	// Return status code
+	return resp.hdr[3];
 }

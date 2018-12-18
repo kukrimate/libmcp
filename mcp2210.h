@@ -63,31 +63,45 @@ typedef struct mcp2210_key_parameters {
 } __attribute__((packed)) mcp2210_key_parameters_t;
 
 // Read SPI settings
-int read_spi_settings(hid_handle_t *handle, mcp2210_spi_settings_t *spi_settings, bool nv);
+int read_spi_settings(hid_handle_t *handle,
+    mcp2210_spi_settings_t *spi_settings, bool nv);
 // Write SPI settings
-int write_spi_settings(hid_handle_t *handle, mcp2210_spi_settings_t *spi_settings, bool nv);
+int write_spi_settings(hid_handle_t *handle,
+    mcp2210_spi_settings_t *spi_settings, bool nv);
 
 // Read chip settings
-int read_chip_settings(hid_handle_t *handle, mcp2210_chip_settings_t *chip_settings, bool nv);
+int read_chip_settings(hid_handle_t *handle,
+    mcp2210_chip_settings_t *chip_settings, bool nv);
 // Write chip settings
-int write_chip_settings(hid_handle_t *handle, mcp2210_chip_settings_t *chip_settings, bool nv);
+int write_chip_settings(hid_handle_t *handle,
+    mcp2210_chip_settings_t *chip_settings, bool nv);
 
 // Read key parameters
-int read_key_parameters(hid_handle_t *handle, mcp2210_key_parameters_t *key_parameters);
+int read_key_parameters(hid_handle_t *handle,
+    mcp2210_key_parameters_t *key_parameters);
 // Write key parameters
-int write_key_parameters(hid_handle_t *handle, mcp2210_key_parameters_t *key_parameters);
+int write_key_parameters(hid_handle_t *handle,
+    mcp2210_key_parameters_t *key_parameters);
 
 // Read product name
-int read_product_name(hid_handle_t *handle, char *buffer, size_t buffer_len);
+int read_product_name(hid_handle_t *handle,char *buffer, size_t buffer_len);
 // Write product name
 int write_product_name(hid_handle_t *handle, char *str);
 
 // Read manufacturer name
-int read_manufacturer_name(hid_handle_t *handle, char *buffer, size_t buffer_len);
+int read_manufacturer_name(hid_handle_t *handle,
+    char *buffer, size_t buffer_len);
 // Write manufacturer name
 int write_manufacturer_name(hid_handle_t *handle, char *str);
 
 // SPI transfer
-int mcp2210_spi_transfer(hid_handle_t *handle, void *ibuf, size_t ilen,	void *obuf, size_t *olen);
+#define MCP2210_SPI_STATUS_FINISHED    0x10
+#define MCP2210_SPI_STATUS_NO_DATA     0x20
+#define MCP2210_SPI_STATUS_DATA_NEEDED 0x30
+
+// Returns: one of the 3 listed status codes, -1 -> error
+int mcp2210_spi_transfer(hid_handle_t *handle,
+    void *send, size_t send_len,
+    void *recv, size_t *recv_len);
 
 #endif

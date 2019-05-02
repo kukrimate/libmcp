@@ -1,38 +1,25 @@
-OBJ = mcp2210.o
+include config.mk
 
-USE_HIDRAW = 1
-
-# HID backends
+# dependencies for backends
 ifeq ($(USE_LIBUSB),1)
-OBJ  += hid_libusb.o
-CFLAGS += `pkg-config --cflags libusb-1.0`
-LIBS += `pkg-config --libs libusb-1.0`
+export CFLAGS += $(shell pkg-config --cflags libusb-1.0)
+export LIBS   += $(shell pkg-config --libs libusb-1.0)
 else ifeq ($(USE_HIDRAW),1)
-OBJ  += hid_linux.o
-LIBS += -ludev
+export LIBS   += -ludev
 endif
 
-APPOBJ = conftool.o
-
 .PHONY: all
-all: libmcp2210.so libmcp2210.a mcp2210_conf
+all: lib conf
 
-# Shared library
-libmcp2210.so: $(OBJ)
-	$(CC) $(LDFLAGS) -shared $(OBJ) -o $@ $(LIBS)
+.PHONY: lib
+lib:
+	$(MAKE) -C $@
 
-# Static library
-libmcp2210.a: $(OBJ)
-	$(AR) $(ARFLAGS) $@ $(OBJ)
-
-# Configuration tool
-mcp2210_conf: $(APPOBJ) libmcp2210.a
-	$(CC) $(LDFLAGS) $(APPOBJ) libmcp2210.a -o $@ $(LIBS)
-
-# Compile C code
-%.o: %.c
-	$(CC) $(CFLAGS) -c $^ -o $@
+.PHONY: conf
+conf: lib
+	$(MAKE) -C $@
 
 .PHONY: clean
 clean:
-	rm -f $(OBJ) libmcp2210.so libmcp2210.a $(APPOBJ) mcp2210_conf
+	$(MAKE) -C lib clean
+	$(MAKE) -C conf clean

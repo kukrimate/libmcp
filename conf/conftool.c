@@ -6,8 +6,7 @@
 #include <stdbool.h>
 #include <unistd.h>
 #include <errno.h>
-#include "hid.h"
-#include "mcp2210.h"
+#include <mcp2210.h>
 #include "config.h"
 
 static ssize_t get_device_list(hid_handle_t ***devices)

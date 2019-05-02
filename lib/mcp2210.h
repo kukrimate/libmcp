@@ -2,6 +2,9 @@
 #ifndef MCP2210_H
 #define MCP2210_H
 
+// The HID API is part of libmcp
+#include "hid.h"
+
 // VID and PID of the MCP2210
 #define MCP2210_VID 0x04d8
 #define MCP2210_PID 0x00de

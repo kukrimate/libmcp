@@ -12,12 +12,6 @@ OBJ  += hid_linux.o
 LIBS += -ludev
 endif
 
-ifeq ($(shell uname -s),Linux)
-
-else
-$(error Your platform is not supported at the moment!)
-endif
-
 APPOBJ = conftool.o
 
 .PHONY: all

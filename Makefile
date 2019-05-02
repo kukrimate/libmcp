@@ -1,9 +1,19 @@
 OBJ = mcp2210.o
 
-# Operating system dependent
-ifeq ($(shell uname -s),Linux)
+USE_HIDRAW = 1
+
+# HID backends
+ifeq ($(USE_LIBUSB),1)
+OBJ  += hid_libusb.o
+CFLAGS += `pkg-config --cflags libusb-1.0`
+LIBS += `pkg-config --libs libusb-1.0`
+else ifeq ($(USE_HIDRAW),1)
 OBJ  += hid_linux.o
 LIBS += -ludev
+endif
+
+ifeq ($(shell uname -s),Linux)
+
 else
 $(error Your platform is not supported at the moment!)
 endif

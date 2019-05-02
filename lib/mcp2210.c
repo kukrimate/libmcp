@@ -5,7 +5,6 @@
 #include <errno.h>
 #include <stdint.h>
 #include <stdbool.h>
-#include "hid.h"
 #include "mcp2210.h"
 
 // NVRAM
@@ -71,7 +70,7 @@ static inline int do_usb_cmd(hid_handle_t *handle, mcp2210_cmd_t *cmd, mcp2210_r
 
 static inline void prepare_cmd(mcp2210_cmd_t *cmd, uint8_t hdr_0, uint8_t hdr_1)
 {
-	bzero(cmd, sizeof(*cmd));
+	memset(cmd, 0, sizeof(*cmd));
 	cmd->hdr[0] = hdr_0;
 	cmd->hdr[1] = hdr_1;
 }
@@ -107,13 +106,13 @@ int write_spi_settings(hid_handle_t *handle, mcp2210_spi_settings_t *spi_setting
 	else
 		prepare_cmd(&cmd, MCP2210_CMD_SET_SPI_SETTINGS, 0);
 	cmd.data.spi_settings = *spi_settings;
-	
+
 	mcp2210_resp_t resp;
 	if (-1 == do_usb_cmd(handle, &cmd, &resp))
 		return -1;
 
-	if (resp.hdr[0] != cmd.hdr[0] || resp.hdr[1] != 0 || 
-			nv && resp.hdr[2] != MCP2210_SUB_SPI_SETTINGS) {
+	if (resp.hdr[0] != cmd.hdr[0] || resp.hdr[1] != 0 ||
+			(nv && resp.hdr[2] != MCP2210_SUB_SPI_SETTINGS)) {
 		errno = EACCES;
 		return -1;
 	}
@@ -133,8 +132,8 @@ int read_chip_settings(hid_handle_t *handle, mcp2210_chip_settings_t *chip_setti
 	if (-1 == do_usb_cmd(handle, &cmd, &resp))
 		return -1;
 
-	if (resp.hdr[0] != cmd.hdr[0] || resp.hdr[1] != 0 || 
-			nv && resp.hdr[2] != MCP2210_SUB_CHIP_SETTINGS) {
+	if (resp.hdr[0] != cmd.hdr[0] || resp.hdr[1] != 0 ||
+			(nv && resp.hdr[2] != MCP2210_SUB_CHIP_SETTINGS)) {
 		errno = EACCES;
 		return -1;
 	}
@@ -156,8 +155,8 @@ int write_chip_settings(hid_handle_t *handle, mcp2210_chip_settings_t *chip_sett
 	if (-1 == do_usb_cmd(handle, &cmd, &resp))
 		return -1;
 
-	if (resp.hdr[0] != cmd.hdr[0] || resp.hdr[1] != 0 || 
-			nv && resp.hdr[2] != MCP2210_SUB_CHIP_SETTINGS) {
+	if (resp.hdr[0] != cmd.hdr[0] || resp.hdr[1] != 0 ||
+			(nv && resp.hdr[2] != MCP2210_SUB_CHIP_SETTINGS)) {
 		errno = EACCES;
 		return -1;
 	}
@@ -175,7 +174,7 @@ int read_key_parameters(hid_handle_t *handle, mcp2210_key_parameters_t *key_para
 	if (-1 == do_usb_cmd(handle, &cmd, &resp))
 		return -1;
 
-	if (resp.hdr[0] != cmd.hdr[0] || resp.hdr[1] != 0 || 
+	if (resp.hdr[0] != cmd.hdr[0] || resp.hdr[1] != 0 ||
 			resp.hdr[2] != cmd.hdr[1]) {
 		errno = EACCES;
 		return -1;
@@ -186,7 +185,7 @@ int read_key_parameters(hid_handle_t *handle, mcp2210_key_parameters_t *key_para
 	key_parameters->power_options = resp.data.key_parameters_resp.power_options;
 	key_parameters->current_amount = resp.data.key_parameters_resp.current_amount;
 
-	return 0;	
+	return 0;
 }
 // Write key parameters
 int write_key_parameters(hid_handle_t *handle, mcp2210_key_parameters_t *key_parameters)
@@ -199,13 +198,13 @@ int write_key_parameters(hid_handle_t *handle, mcp2210_key_parameters_t *key_par
 	if (-1 == do_usb_cmd(handle, &cmd, &resp))
 		return -1;
 
-	if (resp.hdr[0] != cmd.hdr[0] || resp.hdr[1] != 0 || 
+	if (resp.hdr[0] != cmd.hdr[0] || resp.hdr[1] != 0 ||
 			resp.hdr[2] != cmd.hdr[1]) {
 		errno = EACCES;
 		return -1;
 	}
 
-	return 0;	
+	return 0;
 }
 static void to_ascii(uint16_t *s, size_t l, char *d)
 {
@@ -233,7 +232,7 @@ int read_product_name(hid_handle_t *handle, char *buffer, size_t buffer_len)
 	if (-1 == do_usb_cmd(handle, &cmd, &resp))
 		return -1;
 
-	if (resp.hdr[0] != cmd.hdr[0] || resp.hdr[1] != 0 || 
+	if (resp.hdr[0] != cmd.hdr[0] || resp.hdr[1] != 0 ||
 			resp.hdr[2] != cmd.hdr[1]) {
 		errno = EACCES;
 		return -1;
@@ -261,7 +260,7 @@ int write_product_name(hid_handle_t *handle, char *str)
 	if (-1 == do_usb_cmd(handle, &cmd, &resp))
 		return -1;
 
-	if (resp.hdr[0] != cmd.hdr[0] || resp.hdr[1] != 0 || 
+	if (resp.hdr[0] != cmd.hdr[0] || resp.hdr[1] != 0 ||
 			resp.hdr[2] != cmd.hdr[1]) {
 		errno = EACCES;
 		return -1;
@@ -307,7 +306,7 @@ int write_manufacturer_name(hid_handle_t *handle, char *str)
 	if (-1 == do_usb_cmd(handle, &cmd, &resp))
 		return -1;
 
-	if (resp.hdr[0] != cmd.hdr[0] || resp.hdr[1] != 0 || 
+	if (resp.hdr[0] != cmd.hdr[0] || resp.hdr[1] != 0 ||
 			resp.hdr[2] != cmd.hdr[1]) {
 		errno = EACCES;
 		return -1;

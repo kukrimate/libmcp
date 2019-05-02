@@ -38,7 +38,7 @@ ssize_t hid_find_devices(uint16_t vid, uint16_t pid, hid_handle_t **dest, size_t
 
 	size_t dev_index = 0;
 
-	for (size_t dev_i = 0; dev_i < device_count; ++dev_i) {
+	for (size_t dev_i = 0; dev_i < (size_t) device_count; ++dev_i) {
 		struct libusb_device_descriptor dev_desc;
 
 		if (libusb_get_device_descriptor(devices[dev_i], &dev_desc) < 0) {
@@ -115,7 +115,8 @@ ssize_t hid_find_devices(uint16_t vid, uint16_t pid, hid_handle_t **dest, size_t
 				dev_desc.idVendor, dev_desc.idProduct);
 
 			// Add it to the array
-			dest[dev_index++] = handle;
+			if (dev_index < dest_len)
+				dest[dev_index++] = handle;
 
 			// Cleanup
 			libusb_free_config_descriptor(conf_desc);
@@ -140,7 +141,7 @@ ssize_t hid_write(hid_handle_t *handle, void *data, size_t data_len)
 	if (libusb_interrupt_transfer(handle->libusb_handle, handle->endpoint_out,
 			data, data_len, &transferred, 0) < 0)
 		return -1;
-	if (transferred != data_len) {
+	if ((size_t) transferred != data_len) {
 		errno = EINVAL;
 		return -1;
 	}
@@ -153,7 +154,7 @@ ssize_t hid_read(hid_handle_t *handle, void *buffer, size_t buffer_len)
 	if (libusb_interrupt_transfer(handle->libusb_handle, handle->endpoint_in,
 			buffer, buffer_len, &read, 0) < 0)
 		return -1;
-	if (read != buffer_len) {
+	if ((size_t) read != buffer_len) {
 		errno = EINVAL;
 		return -1;
 	}

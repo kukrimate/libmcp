@@ -28,7 +28,7 @@ static ssize_t get_device_list(hid_handle_t ***devices)
 	return device_count;
 }
 
-static int command_list(int argc, char **argv)
+static int command_list()
 {
 	hid_handle_t **devices;
 	ssize_t device_count = get_device_list(&devices);
@@ -42,9 +42,9 @@ static int command_list(int argc, char **argv)
 		goto done;
 	}
 
-	printf("Found %d devices\n", device_count);
-	for (size_t i = 0; i < device_count; ++i) {
-		printf("[%d] %s\n", i + 1, hid_device_desc(devices[i]));
+	printf("Found %ld devices\n", device_count);
+	for (size_t i = 0; i < (size_t) device_count; ++i) {
+		printf("[%ld] %s\n", i + 1, hid_device_desc(devices[i]));
 		hid_cleanup_device(devices[i]);
 	}
 
@@ -138,8 +138,8 @@ static int command_get_set(int argc, char **argv)
 	int status = 0;
 
 	size_t index = strtol(argv[optind], NULL, 10);
-	if (index > device_count || !index) {
-		fprintf(stderr, "Invalid device number %d\n", index);
+	if (index > (size_t) device_count || !index) {
+		fprintf(stderr, "Invalid device number %ld\n", index);
 		status = 1;
 		goto done;
 	}
@@ -258,7 +258,7 @@ static int command_get_set(int argc, char **argv)
 	}
 
 done:
-	for (size_t i = 0; i < device_count; ++i) {
+	for (size_t i = 0; i < (size_t) device_count; ++i) {
 		hid_cleanup_device(devices[i]);
 	}
 	free(devices);
@@ -280,7 +280,7 @@ int main(int argc, char **argv)
 
 	// Commands
 	if (!strcmp(argv[1], "list")) {
-		return command_list(argc - 1, argv + 1);
+		return command_list();
 	} else if (!strcmp(argv[1], "get") || !strcmp(argv[1], "set")) {
 		return command_get_set(argc - 1, argv + 1);
 	} else {

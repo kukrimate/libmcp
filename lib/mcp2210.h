@@ -13,7 +13,7 @@
 // NOTE: every multi byte value is little endian
 ////
 
-#ifdef LITTLE_ENDIAN
+#if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
 #define b16(x) x
 #define b32(x) x
 #else

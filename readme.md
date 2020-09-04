@@ -1,3 +1,8 @@
+NOTE: this project is unmaintained and has many known flaws. Please look
+elsewhere if you want to communicate with an MCP2210 chip. Or even better use
+a different IC as the MCP2210 is in many way the worst possible choice you can
+make.
+
 # libmcp2210
 User space library/driver for the Microchip MCP2210 USB to SPI master bridge.
 This repository includes both a library and a configuration tool for the MCP2210.
